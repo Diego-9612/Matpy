@@ -14,36 +14,38 @@ const inputElevation = document.querySelector('.form__input--elevation');
 
 class Workup {
     date = new Date();
-    id = (this.date.now() + ' ').slice(-10);
+    id = (Date.now() + ' ').slice(-10);
 
-    constructor(coords, distance, duration){
+    constructor(coords, distance, duration) {
         this.coords = coords;
         this.distance = distance;
         this.duration = duration;
-        this.calcPace(); 
+        this.calcPace();
     };
 
-    calcPace(){
+    calcPace() {
         this.pace = this.duration / this.distance;
         return this.pace;
     }
 };
 
-class Running extends Workup{
-    constructor(coords, distance, duration, cadence){
+class Running extends Workup {
+    type = 'running';
+    constructor(coords, distance, duration, cadence) {
         super(coords, distance, duration);
         this.cadence = cadence;
         this.calcPace();
     };
 
-    calcSpeed(){
+    calcSpeed() {
         this.speed = this.distance / (this.duration / 60);
         return this.speed
     }
 };
 
-class Cycling extends Workup{
-    constructor(coords, distance, duration, elevationGain){
+class Cycling extends Workup {
+    type = 'cycling';
+    constructor(coords, distance, duration, elevationGain) {
         super(coords, distance, duration, elevationGain);
         this.elevationGain = elevationGain;
     };
@@ -58,12 +60,11 @@ class App {
 
     #map;
     #mapEvent;
+    #workouts = [];
 
     constructor() {
         this._getPosition();
-
         form.addEventListener('submit', this._newWorkout.bind(this));
-
         inputType.addEventListener('change', this._toggleElevationField);
 
     };
@@ -96,8 +97,8 @@ class App {
 
     _showForm(mapE) {
         this.#mapEvent = mapE;
-            form.classList.remove('hidden');
-            inputDistance.focus();
+        form.classList.remove('hidden');
+        inputDistance.focus();
     };
 
     _toggleElevationField() {
@@ -108,19 +109,66 @@ class App {
     };
 
     _newWorkout(e) {
+        
+
+        const validInputs = (...inputs) => inputs.every(inp => Number.isFinite(inp));
+        const allPositive = (...inputs) => inputs.every(inp => inp > 0);
+
         e.preventDefault();
 
-        inputDistance.value = inputCadence.value = inputDuration.value = inputElevation.value = ' ';
-
+        const type = inputType.value;
+        const distance = +inputDistance.value;
+        const duration = +inputDuration.value;
         const { lat, lng } = this.#mapEvent.latlng;
-        L.marker([lat, lng]).addTo(this.#map).bindPopup(L.popup({
-            maxWidth: 300,
-            minWidth: 100,
-            autoClose: false,
-            closeOnClick: false,
-            className: 'running-popup'
-        }).setContent('Workup')).openPopup();
+        let workout;
+
+        if (type === 'running') {
+            const cadence = +inputCadence.value;
+
+            if (!validInputs(distance, duration, cadence) || !allPositive(distance, duration, cadence)
+            )
+                return alert('Inputs have to be positive numbers!');
+
+            workout = new Running([lat, lng], distance, duration, cadence);
+        }
+
+        if (type === 'cycling') {
+            const elevation = +inputElevation.value;
+
+            if (!validInputs(distance, duration, elevation) || !allPositive(distance, duration, elevation)
+            )
+                return alert('Inputs have to be positive numbers!');
+
+            workout = new Cycling([lat, lng], distance, duration, elevation);
+        }
+
+        this.#workouts.push(workout);
+        console.log(workout);
+
+        this.renderWorkoutMarker(workout);
+
+        inputDistance.value = inputCadence.value = inputDuration.value = inputElevation.value = ' ';
     };
+
+    renderWorkoutMarker(workout) {
+        L.marker(workout.coords)
+            .addTo(this.#map)
+            .bindPopup(
+                L.popup({
+                    maxWidth: 250,
+                    minWidth: 100,
+                    autoClose: false,
+                    closeOnClick: false,
+                    className: `${workout.type}-popup`,
+                })
+            )
+            .setPopupContent(
+                'workout'
+            )
+            .openPopup();
+        }
 };
+
+
 
 const app = new App();
