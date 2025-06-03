@@ -103,9 +103,7 @@ Distribuido bajo la Licencia MIT. Consulta `LICENSE` para más información.
 
 ## 📬 Contacto
 
-Diego Guerrero, Codeweb Studio – [TuCorreo@ejemplo.com](diego.guerrero9612@gmail.com)
-
-Proyecto del curso avanzado de JavaScript basado en la aplicación *Mapty*.
+Diego Guerrero, Codeweb Studio – [diegoguerrero@umariana.edu.co](diegoguerrero@umariana.edu.co)
 
 ---
 
